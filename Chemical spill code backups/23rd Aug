@@ -1,1 +1,69 @@
+from hub import light, light_matrix, port, sound, motion_sensor
+import color, color_sensor, motor, distance_sensor, time, motor_pair
 
+motor_right_port = port.A
+motor_left_port = port.B
+dist_sensor_port = port.C
+grabby_motor_port = port.D
+right_colour_port = port.E
+left_colour_port = port.F
+motor_pair.pair(motor_pair.PAIR_1, port.B, port.A)
+
+
+is_running = True
+uncertainty = 3
+seeBlack = 0
+counter = 0
+moveSpeed = 0.6
+motion_sensor.set_yaw_face(motion_sensor.TOP)
+motion_sensor.reset_yaw(0)
+
+def move_forward(sec):
+    motor_pair.move_for_time(motor_pair.PAIR_1, (sec*900), 0 )
+
+def see_can(dist_sensor, ):
+    sound.beep(1211,213,100)
+    
+while True:
+
+    LeftColor = color_sensor.color(left_colour_port)
+    RightColor = color_sensor.color(right_colour_port)
+
+    movementnumber = 0
+    turnstrength = 425
+
+    if LeftColor == 6 and RightColor == 6:
+        angle = round(motion_sensor.tilt_angles()[0]/10)
+        sound.beep(440, 400,100)
+        motion_sensor.reset_yaw(0)
+        move_forward(1)
+        time.sleep(2)
+        
+        motion_sensor.reset_yaw(0)
+        while distance_sensor.distance(dist_sensor_port) >= 1500 or distance_sensor.distance(dist_sensor_port) == -1:
+            while angle <= -90 and (distance_sensor.distance(dist_sensor_port) >= 1500 or distance_sensor.distance(dist_sensor_port) == -1):
+                motor.run_for_degrees(motor_right_port, 5, -50) 
+                motor.run_for_degrees(motor_left_port, 5, -50)
+                angle = round(motion_sensor.tilt_angles()[0]/10)
+                time.sleep(0.5)
+            while angle >= 0 and (distance_sensor.distance(dist_sensor_port) >= 1500 or distance_sensor.distance(dist_sensor_port) == -1):
+                motor.run_for_degrees(motor_right_port, 5, 50)
+                motor.run_for_degrees(motor_left_port, 5, 5 0)
+                angle = round(motion_sensor.tilt_angles()[0]/10)
+                time.sleep(0.5)
+            while angle <= 90 and (distance_sensor.distance(dist_sensor_port) >= 1500 or distance_sensor.distance(dist_sensor_port) == -1):
+                motor.run_for_degrees(motor_right_port, 5, 50)
+                motor.run_for_degrees(motor_left_port, 5, 50)
+                angle = round(motion_sensor.tilt_angles()[0]/10)
+                time.sleep(0.5)
+            while angle <= 0 and (distance_sensor.distance(dist_sensor_port) >= 1500 or distance_sensor.distance(dist_sensor_port) == -1):
+                motor.run_for_degrees(motor_right_port, 5, -50)
+                motor.run_for_degrees(motor_left_port, 5, -50)
+                angle = round(motion_sensor.tilt_angles()[0]/10)
+                time.sleep(0.5)
+        print(angle)
+        sound.beep(100, 400,100)
+        move_forward(2)
+        time.sleep(0.5)
+        motor.run_for_degrees(grabby_motor_port, -90, 100)  
+      
