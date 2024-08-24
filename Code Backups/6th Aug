@@ -1,0 +1,115 @@
+from hub import light, light_matrix, port, sound
+import color, color_sensor, motor, distance_sensor, time
+
+
+class sensors:
+
+
+    name = ""
+    port = ""
+    output = 0
+
+
+
+
+
+
+motor_right = port.A
+motor_right_oop = sensors()
+motor_right_oop.name = "Right driving motor"
+motor_right_oop.port = "A"
+motor_right_oop.output = motor.velocity(port.A)
+
+
+
+
+motor_left = port.B
+dist_sensor = port.C
+grabby_motor = port.D
+right_colour = port.E
+left_colour = port.F
+
+
+is_running = True
+seeBlack = 0
+counter = 0
+moveSpeed = 0.6
+ 
+
+
+print(motor_right_oop.name + " is in port " + motor_right_oop.port + " and is outputing " + str(motor_right_oop.output))
+motor_right_oop.output = 0
+if motor_right_oop.output != motor_right_oop.output:
+    print(motor_right_oop.name + " is in port " + motor_right_oop.port + " and is outputing " + str(motor_right_oop.output))
+    motor_right_oop.output = motor_right_oop.output
+
+
+def Turn(right: bool):
+    time.sleep(0.05)
+
+
+    if right:
+        motor.run_for_degrees(motor_left, 215, -200 )
+        sound.beep()
+    else:
+        motor.run_for_degrees(motor_right, 215, 200 )
+
+
+    time.sleep(1)
+
+
+
+
+
+
+
+
+# TODO: hardcode in green turn
+while True:
+       
+    LeftColor = color_sensor.color(left_colour)
+    RightColor = color_sensor.color(right_colour)
+   
+    movementnumber = 0
+    turnstrength = 425
+
+
+    if LeftColor == 0:
+        movementnumber = -0.4
+    if RightColor == 0:
+        movementnumber = 0.4
+   
+    if LeftColor == 6 and RightColor == 6:
+
+
+        time.sleep(2)
+        motor.run_for_degrees(port.D, 60, -100)
+        continue
+
+
+    if LeftColor == 6:
+        if RightColor != 6:
+            motor.stop(motor_left)
+            motor.stop(motor_right)
+            time.sleep(0.05)
+            Turn(False)
+    if RightColor == 6:
+        if RightColor != 6:
+            motor.stop(motor_left)
+            motor.stop(motor_right)
+            time.sleep(0.05)
+            Turn(True)
+
+
+
+
+
+
+
+
+    if movementnumber == 0:
+        motor.run(motor_right, round(moveSpeed * 150))
+        motor.run(motor_left, round(moveSpeed * -150))
+    else:
+        motor.run(motor_right, round(100 - (movementnumber * turnstrength)))
+        motor.run(motor_left, round(-100 - (movementnumber * turnstrength)))
