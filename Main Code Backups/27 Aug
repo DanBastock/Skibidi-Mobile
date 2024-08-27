@@ -1,0 +1,172 @@
+from hub import light, light_matrix, port, sound, motion_sensor 
+import color, color_sensor, motor, distance_sensor, time, motor_pair
+
+motor_right_port = port.A
+
+motor_left_port = port.B
+
+dist_sensor_port = port.C
+
+grabby_motor_port = port.D
+
+right_colour_port = port.E
+
+left_colour_port = port.F
+
+motor_pair.pair(motor_pair.PAIR_1, port.B, port.A)
+
+is_running = True
+counter = 0
+moveSpeed = 0.5
+motion_sensor.set_yaw_face(motion_sensor.BACK)
+motion_sensor.reset_yaw(0)
+seeBlack = True
+
+def move_forward(sec):
+    motor_pair.move_for_time(motor_pair.PAIR_1, (sec*900), 0 )
+
+def Turn(right: bool):
+    motor_pair.stop(motor_pair.PAIR_1)
+    time.sleep(0.5)
+    print("in function")
+    global seeBlack
+
+    if right:
+        time.sleep(0.5)
+        print(right)
+        seeBlack == False
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 30, 0)
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 150, 50)
+        time.sleep(2)
+    else: 
+        print(right)
+        time.sleep(0.5)
+        seeBlack == False
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 30, 0)
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 150, -50)
+        time.sleep(2)
+        print("i hath turned")
+
+    time.sleep(0.01)
+    seeBlack = True
+
+def rescue_victim(RightColor, LeftColor):
+
+    while RightColor == 6 and LeftColor == 6: # while it's still in the bad
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 80, 0) # move forward
+        RightColor = color_sensor.color(right_colour_port) # update RightColor
+        LeftColor = color_sensor.color(left_colour_port) # update LeftColor
+
+    print("out of while loop")
+
+    motor.run_for_degrees(grabby_motor_port, 80, 1000) # at this point, we are out of the spill, so release the can
+
+    print("release")
+
+    time.sleep(2)
+
+    print("end of function")
+
+
+
+
+# TODO: hardcode in green turn
+while True:
+
+    LeftColor = color_sensor.color(left_colour_port)
+    RightColor = color_sensor.color(right_colour_port)
+    
+    movementnumber = 0 
+    turnstrength = 425
+    distance_check = 590
+
+    if LeftColor == 6 and RightColor == 6:
+            angle = round(motion_sensor.tilt_angles()[0]/10)
+            sound.beep(440, 400,100)
+            motion_sensor.reset_yaw(0)
+            move_forward(2)
+            time.sleep(1)
+
+            motion_sensor.reset_yaw(0)
+
+            while distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1:
+
+                while angle <= -90 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    motor.run_for_degrees(motor_right_port, 5, -50)
+                    motor.run_for_degrees(motor_left_port, 5, -50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle >= 0 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    motor.run_for_degrees(motor_right_port, 5, 50)
+                    motor.run_for_degrees(motor_left_port, 5, 50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle <= 90 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    motor.run_for_degrees(motor_right_port, 5, 50)
+                    motor.run_for_degrees(motor_left_port, 5, 50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle <= 0 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    motor.run_for_degrees(motor_right_port, 5, -50)
+                    motor.run_for_degrees(motor_left_port, 5, -50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+            print(angle)
+            sound.beep(100, 400,100)
+
+            if LeftColor == 6 and RightColor == 6 and distance_check > distance_sensor.distance(dist_sensor_port) > 500:
+                motor_pair.move_for_degrees(motor_pair.PAIR_1, -75, 0)
+
+            elif LeftColor ==6 and RightColor == 6 and distance_sensor.distance(dist_sensor_port) <= 60 and distance_sensor.distance(dist_sensor_port) != -1:
+                motor.run_for_degrees(grabby_motor_port, 80, -1000)
+                print("Grab")
+                time.sleep(1)
+                motor_pair.move_for_time(motor_pair.PAIR_1, 300, 0)
+                rescue_victim(RightColor, LeftColor)
+                motor_pair.stop(motor_pair.PAIR_1)
+
+    if LeftColor == 6 and RightColor != 6:
+            time.sleep(0.5)
+            Turn(False)
+    if RightColor == 6 and LeftColor != 6:
+            time.sleep(0.5)
+            Turn(True)
+
+    if seeBlack:
+
+        if LeftColor == 0:
+            movementnumber = -0.5
+            
+        if RightColor == 0:
+            movementnumber = 0.5
+
+        
+
+    if LeftColor == 6:
+        seeBlack == False
+
+    if RightColor == 6:
+        seeBlack == False
+        
+        if RightColor != 6:
+            motor.stop(motor_left_port)
+            motor.stop(motor_right_port)
+            time.sleep(0.05)
+            Turn(True)
+
+    if movementnumber == 0:
+        motor.run(motor_right_port, round(moveSpeed * 150))
+        motor.run(motor_left_port, round(moveSpeed * -150))
+    else:
+
+        motor.run(motor_right_port, round(100 - (movementnumber * turnstrength)))
+        motor.run(motor_left_port, round(-100 - (movementnumber * turnstrength)))
+
+ 
