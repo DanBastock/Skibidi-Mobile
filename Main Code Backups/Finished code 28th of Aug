@@ -1,0 +1,187 @@
+from hub import light, light_matrix, port, sound, motion_sensor 
+import color, color_sensor, motor, distance_sensor, time, motor_pair
+
+# Important note: Colour code: 0 = black, 6 == Green 
+
+# Defining Motors and sensors 
+
+motor_right_port = port.A
+
+motor_left_port = port.B
+
+dist_sensor_port = port.C
+
+grabby_motor_port = port.D
+
+right_colour_port = port.E
+
+left_colour_port = port.F
+
+
+#creating a motor pair 
+motor_pair.pair(motor_pair.PAIR_1, port.B, port.A)
+
+#reset variables and the robot 
+motor.run_for_degrees(grabby_motor_port, 100, 100)
+is_running = True
+counter = 0
+moveSpeed = 0.5
+motion_sensor.set_yaw_face(motion_sensor.BACK)
+motion_sensor.reset_yaw(0)
+seeBlack = True
+
+
+# Move forward by milliseconds*900, (the input sec is in milliseconds and is thus multipled in order to get it close to 1 second)
+def move_forward(sec):
+    motor_pair.move_for_time(motor_pair.PAIR_1, (sec*900), 0 )
+
+
+def Turn(right: bool):
+    motor_pair.stop(motor_pair.PAIR_1)
+    time.sleep(0.5)
+    print("in function")
+    global seeBlack
+
+    # Check if the Right colour sensor sees green or the Left sensor 
+    if right:
+        time.sleep(0.5)
+        print(right)
+        seeBlack == False
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 30, 0) # move forward with zero steering
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 150, 50) # Turn towards the Right
+        time.sleep(2)
+    else: 
+        print(right)
+        time.sleep(0.5)
+        seeBlack == False # Make sure the other sensor does not see black 
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 30, 0) # move forward with zero steering
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 150, -50) # Turn towards the left
+        time.sleep(2)
+        print("i hath turned")
+
+    time.sleep(0.01)
+    seeBlack = True #reset the other sensor so it follow the line again 
+
+def rescue_victim(RightColor, LeftColor):
+
+    while RightColor == 6 and LeftColor == 6: # while it's still in the bad
+        time.sleep(1)
+        motor_pair.move_for_degrees(motor_pair.PAIR_1, 80, 0) # move forward
+        RightColor = color_sensor.color(right_colour_port) # update RightColor
+        LeftColor = color_sensor.color(left_colour_port) # update LeftColor
+
+    print("out of while loop")
+
+    motor.run_for_degrees(grabby_motor_port, 80, 1000) # at this point, we are out of the spill, so release the victim
+
+    print("release")
+
+    time.sleep(2)
+
+    print("end of function")
+
+
+
+
+# TODO: hardcode in green turn
+while True:
+
+    #define the colour sensors so that we use colour instead of reflection
+    LeftColor = color_sensor.color(left_colour_port)
+    RightColor = color_sensor.color(right_colour_port)
+    
+    #define encapsulated variables (Variables that require calibration )
+    movementnumber = 0 
+    turnstrength = 425 # Gets changed depending on what wheels are used 
+    distance_check = 590 # Gets changed depending on how close walls are to the centre of the chemical spill 
+
+    
+    if LeftColor == 6 and RightColor == 6: #check if in chemical spill 
+            angle = round(motion_sensor.tilt_angles()[0]/10) # Make it easier to check the angle the robot is in relation to the angle at which the robot entered the spill
+            sound.beep(440, 400,100)
+            motion_sensor.reset_yaw(0)
+            move_forward(2) # Move further into the spill 
+            time.sleep(1)
+
+            motion_sensor.reset_yaw(0) # reset the angle which the robot starts turning from incase it has turned while entering 
+
+            while distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1:
+
+                while angle <= -90 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1): 
+                    # turn until the robot has reached 90 degrees in the negative direction (left) or until it sees the victim 
+                    motor.run_for_degrees(motor_right_port, 5, -50)
+                    motor.run_for_degrees(motor_left_port, 5, -50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle >= 0 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    # turn until the robot is facing the angle it started from or until it sees the Victim
+                    motor.run_for_degrees(motor_right_port, 5, 50)
+                    motor.run_for_degrees(motor_left_port, 5, 50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle <= 90 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    # turn until the robot has reached 90 degrees in the positive direction (right) or until it sees the victim
+                    motor.run_for_degrees(motor_right_port, 5, 50)
+                    motor.run_for_degrees(motor_left_port, 5, 50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+                while angle <= 0 and (distance_sensor.distance(dist_sensor_port) >= distance_check or distance_sensor.distance(dist_sensor_port) == -1):
+                    # turn until the robot is facing the angle it started from or until it sees the Victim
+                    motor.run_for_degrees(motor_right_port, 5, -50)
+                    motor.run_for_degrees(motor_left_port, 5, -50)
+                    angle = round(motion_sensor.tilt_angles()[0]/10)
+                    time.sleep(0.5)
+
+            print(angle)
+            sound.beep(100, 400,100)
+
+
+            if LeftColor == 6 and RightColor == 6 and distance_check > distance_sensor.distance(dist_sensor_port) > 500:
+                # If still in the spill and can see the victim out of its reach, move towards the victim
+                motor_pair.move_for_degrees(motor_pair.PAIR_1, -75, 0)
+
+            elif LeftColor ==6 and RightColor == 6 and distance_sensor.distance(dist_sensor_port) <= 60 and distance_sensor.distance(dist_sensor_port) != -1:
+                # If in the spill and can see the victim in its reach, grab the victim and move out of the spill
+                motor.run_for_degrees(grabby_motor_port, 80, -1000)
+                print("Grab")
+                time.sleep(1)
+                motor_pair.move_for_time(motor_pair.PAIR_1, 300, 0)
+                rescue_victim(RightColor, LeftColor)
+                motor_pair.stop(motor_pair.PAIR_1)
+
+    # Turning, check which sensor sees green and activitie the turn function 
+    if LeftColor == 6 and RightColor != 6:
+            time.sleep(0.5)
+            Turn(False)
+    if RightColor == 6 and LeftColor != 6:
+            time.sleep(0.5)
+            Turn(True)
+
+    # Check if the robot is meant to be seeing black 
+    if seeBlack:
+
+        #check which side sees black and change the movement number so it can turn later 
+        if LeftColor == 0:
+            movementnumber = -0.5
+            
+        if RightColor == 0:
+            movementnumber = 0.5
+
+        
+    # if the movmentnumber == 0 move straight forward, 
+    # movement number will be == 0 when it sees white 
+    if movementnumber == 0:
+        motor.run(motor_right_port, round(moveSpeed * 150))
+        motor.run(motor_left_port, round(moveSpeed * -150))
+
+    else:
+        # Turn in the direction previously defined 
+        motor.run(motor_right_port, round(100 - (movementnumber * turnstrength)))
+        motor.run(motor_left_port, round(-100 - (movementnumber * turnstrength)))
+
+ 
