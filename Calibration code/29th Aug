@@ -1,0 +1,29 @@
+from hub import light, light_matrix, port, sound, motion_sensor
+import color, color_sensor, motor, distance_sensor, time, motor_pair
+
+motor_right_port = port.A
+
+motor_left_port = port.B
+
+dist_sensor_port = port.C
+
+grabby_motor_port = port.D
+
+right_colour_port = port.E
+
+left_colour_port = port.F
+
+if color_sensor.color(right_colour_port) == 0:
+    print("Right sees Black")
+elif color_sensor.color(left_colour_port) == 0:
+    print("Left sees Black")
+elif color_sensor.color(right_colour_port) == 6:
+    print("Right sees Green")
+elif color_sensor.color(left_colour_port) == 6:
+    print("Left sees Green")
+
+if distance_sensor.distance(dist_sensor_port) != -1:
+    print(distance_sensor.distance(dist_sensor_port))
+
+motor.run(motor_left_port, 100)
+motor.run(motor_right_port, 100) 
